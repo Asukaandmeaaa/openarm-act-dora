@@ -1,0 +1,37 @@
+{
+  "control_mode": "collection_feedforward",
+  "supported_modes": [
+    "official_position",
+    "collection_feedforward"
+  ],
+  "physical_validation_passed": false,
+  "checkpoint": "act_sim_mix_100_30k_01",
+  "note": "Mixed real/simulation ACT checkpoint, 100-step predictions, same-target-time ensemble, immutable 50-step execution blocks. See docs/EXPERIMENTS.md.",
+  "action_execution": {
+    "mode": "act_temporal",
+    "chunk_size": 100,
+    "n_action_steps": 50,
+    "temporal_ensemble_coeff": 0.0
+  },
+  "model_path": "models/act_sim_mix_100_30k_01/pretrained_model",
+  "model_files_sha256": {
+    "config.json": "3d5102f7b0f8fece7895c67654056162f15292375f993c433b71155a519489d9",
+    "model.safetensors": "2c64de81ba1646175f30c827be1ab6d6166cd0b4652cc8bd1a53408d9f9f85aa",
+    "policy_preprocessor.json": "a03a75d7ef6609edd1771d30fcb2f4501c72ed73f59522cf0a78c1a0f6ae3619",
+    "policy_postprocessor.json": "c9622fba743c34a8bbdcecb80e844b55208fea26986b102852f9d746c7861763",
+    "policy_preprocessor_step_3_normalizer_processor.safetensors": "3014cc88cbb2c1d04dcf2d9ea0795dab86ab9fcc343c186213b7d124a0e91920",
+    "policy_postprocessor_step_0_unnormalizer_processor.safetensors": "23beee4e2d90a1794d11f8c16a3d35150a99081d4c8f1a934a1ffc11f5fd55b0"
+  },
+  "model_provenance": {
+    "training_run": "mix30k_metrics_01/checkpoint_030000",
+    "additional_steps": 30000,
+    "initial_model": "act_sim_mix_100_060000_init",
+    "training_manifest_sha256": "5f182bbba7fdba6e1c0d56c640084f38e46388c64d3df012c652620b98137780",
+    "real_episodes": 37,
+    "simulation_normal_episodes": 100,
+    "simulation_recovery_episodes": 50,
+    "physical_test": "operator-reported no obvious issue in one session; not a task success benchmark"
+  },
+  "collection_control_evidence": "Original collection audit retained privately; see docs/EXPERIMENTS.md.",
+  "collection_control_evidence_sha256": "e67fdbb94f139ff746c22d8bd3d2a0c1bc0428b9c84a443157040d817b408349"
+}

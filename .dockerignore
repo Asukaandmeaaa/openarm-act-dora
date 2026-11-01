@@ -1,0 +1,17 @@
+.git
+.venv
+upstream
+models
+results
+validation
+archive
+out
+dist
+**/__pycache__
+.pytest_cache
+**/*.so
+**/*.whl
+runtime.local.json
+assets/hardware.local.yaml
+assets/cameras.local.json
+.env*

@@ -1,0 +1,51 @@
+# NO hardware nodes. Uses the same official observer/client/executor + 30K.
+nodes:
+  - id: simulation
+    path: scripts/node
+    args: simulation
+    inputs:
+      tick:
+        source: dora/timer/millis/10
+        queue_size: 1
+      move_position:
+        source: executor/move_position_right
+        queue_size: 1
+    outputs: [position_right, position_left, status_right, status_left, camera_ceiling, camera_wrist_right]
+  - id: control
+    path: scripts/node
+    args: control
+    inputs:
+      tick: dora/timer/millis/10
+    outputs: [command, task_prompt]
+  - id: observer
+    path: scripts/node
+    args: observer
+    inputs:
+      tick: dora/timer/millis/33
+      arm_right: simulation/position_right
+      arm_left: simulation/position_left
+      arm_right_status: simulation/status_right
+      arm_left_status: simulation/status_left
+      camera_ceiling: simulation/camera_ceiling
+      camera_wrist_right: simulation/camera_wrist_right
+      command: control/command
+      task_prompt: control/task_prompt
+    outputs: [observation]
+  - id: policy-client
+    path: scripts/node
+    args: client
+    inputs:
+      observation:
+        source: observer/observation
+        queue_size: 1
+      chunk_done: executor/chunk_done
+      chunk_prefetch: executor/chunk_prefetch
+    outputs: [actions]
+  - id: executor
+    path: scripts/node
+    args: executor
+    inputs:
+      actions:
+        source: policy-client/actions
+        queue_size: 1
+    outputs: [move_position_right, move_position_left, chunk_done, chunk_prefetch]

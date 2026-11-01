@@ -1,0 +1,83 @@
+diff --git a/src/dora_openarm_local_policy_server/main.py b/src/dora_openarm_local_policy_server/main.py
+index 7009747..38b0886 100644
+--- a/src/dora_openarm_local_policy_server/main.py
++++ b/src/dora_openarm_local_policy_server/main.py
+@@ -21,6 +21,9 @@ import os
+ import pyarrow as pa
+ import socket
+ import tempfile
++from deployment.common import Log, session
++from deployment.chunk_execution import ChunkRequestGate, execution_settings
++from deployment.pipeline_execution import PipelineRequestGate
+ 
+ 
+ def _main_dora(io, shared_dir):
+@@ -28,11 +31,27 @@ def _main_dora(io, shared_dir):
+     data_files = []
+ 
+     node = dora.Node()
++    log = Log('policy_client')
++    execution = execution_settings()
++    if execution['mode'] == 'act_temporal':
++        from deployment.temporal_client import run
++        run(node, io, shared_dir, log)
++        return
++    pipeline = execution['mode'] in ('pipelined', 'chunked_prefetch')
++    gate = PipelineRequestGate() if pipeline else ChunkRequestGate(execution['mode'] == 'chunked')
++    def stopped():
++        return pipeline and any((session()/(name+'.request')).exists() for name in ('stop', 'disable'))
+     previous_observation_id = None
++    # Copy the exact inference Arrow input in the background. Recording does
++    # not alter observations, policy math, or the official executor schedule.
++    from deployment.observation_recording import ObservationSnapshots
++    snapshots = (ObservationSnapshots(path=session(), interval_s=0, max_samples=None)
++                 if execution['mode'] == 'official_blend' else None)
+     for event in node:
+         if event["type"] != "INPUT":
+             continue
+-
++        if stopped() or not gate.accept(event):
++            continue
+         # Main process
+         def prepare_request():
+             nonlocal previous_observation_id
+@@ -87,6 +106,9 @@ def _main_dora(io, shared_dir):
+         #     }
+         #   }
+         request = prepare_request()
++        if snapshots is not None:
++            snapshots.capture(request['data_path'], previous_observation_id,
++                              {**request['metadata'], 'reset': request['reset']})
+         io.write(json.dumps(request) + "\n")
+         io.flush()
+ 
+@@ -106,19 +128,29 @@ def _main_dora(io, shared_dir):
+         if not response:
+             break
+         actions = json.loads(response)
++        if stopped():
++            log('prediction_discarded_after_stop')
++            continue
+         if actions["positions"]:
+             # "reset" signals that these actions are the first of a new episode,
+             # so downstream nodes can drop any state carried over from the
+             # previous episode.
+             metadata = {"interval": actions["interval"], "reset": request["reset"]}
++            metadata.update(request['metadata'])
++            metadata['chunk_id'] = str(request['metadata']['observation_monotonic_ns'])
++            log('raw_policy_chunk', positions=actions['positions'], metadata=metadata)
+             if "cutoff_hz" in actions:
+                 metadata["cutoff_hz"] = actions["cutoff_hz"]
++            gate.dispatched(metadata["chunk_id"])
+             node.send_output(
+                 "actions",
+                 pa.array(actions["positions"], type=pa.list_(pa.float32())),
+                 metadata,
+             )
+ 
++    if snapshots is not None:
++        snapshots.close()
++
+ 
+ def main():
+     """Communicate with a local policy server."""

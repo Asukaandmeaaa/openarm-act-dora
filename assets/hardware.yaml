@@ -1,0 +1,144 @@
+# URDF envelopes. Legacy driver delta field spans the full MIT position range (25 rad).
+collection_feedforward:
+  enabled: true
+  gravity_scale: 1.0
+joint_limits:
+  right_arm:
+  - - -1.3963
+    - 3.4907
+  - - -0.17453
+    - 3.3161
+  - - -1.5708
+    - 1.5708
+  - - -0.02
+    - 2.4435
+  - - -1.5708
+    - 1.5708
+  - - -0.7854
+    - 0.7854
+  - - -1.5708
+    - 1.5708
+  - - -0.7854
+    - 0.0
+  left_arm:
+  - - -3.4907
+    - 1.3963
+  - - -3.3161
+    - 0.17453
+  - - -1.5708
+    - 1.5708
+  - - -0.02
+    - 2.4435
+  - - -1.5708
+    - 1.5708
+  - - -0.7854
+    - 0.7854
+  - - -1.5708
+    - 1.5708
+  - - -0.7854
+    - -0.0
+joint_offsets:
+  right_arm:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  left_arm:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+can_interface:
+  right_arm: can0
+  left_arm: can1
+motor_config:
+  types:
+  - DM8009
+  - DM8009
+  - DM4340
+  - DM4340
+  - DM4310
+  - DM4310
+  - DM4310
+  - DM4310
+  send_ids:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  recv_ids:
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+gripper_posforce: false
+start:
+  moves:
+  - name: training_zero
+    position:
+      right_arm:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - -0.02
+      left_arm:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - -0.02
+    hz: 100
+    duration: 5
+stop:
+  moves: []
+control_gains:
+  kps:
+  - 70.0
+  - 70.0
+  - 70.0
+  - 60.0
+  - 10.0
+  - 10.0
+  - 10.0
+  - 5.0
+  kds:
+  - 2.75
+  - 2.5
+  - 2.0
+  - 2.0
+  - 0.7
+  - 0.6
+  - 0.5
+  - 0.1
+joint_delta_position_limits:
+- 25.0
+- 25.0
+- 25.0
+- 25.0
+- 25.0
+- 25.0
+- 25.0
+- 25.0

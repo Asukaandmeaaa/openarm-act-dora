@@ -1,0 +1,67 @@
+{
+  "repositories": [
+    {
+      "path": "upstream/dora-openarm-evaluation",
+      "url": "https://github.com/enactic/dora-openarm-evaluation.git",
+      "commit": "1a02839da6b41fbb8dc1bb4c6b6370e0c1480dba",
+      "patch": "patches/dora-openarm-evaluation.patch"
+    },
+    {
+      "path": "upstream/openarm_driver",
+      "url": "https://github.com/enactic/openarm_driver.git",
+      "commit": "5c73d835b31875057695f1b8688e0bf9c0bf87b0",
+      "patch": "patches/openarm_driver.patch"
+    },
+    {
+      "path": "upstream/openarm_can",
+      "url": "https://github.com/enactic/openarm_can.git",
+      "commit": "f340d4b808fb177e1f297af54eb55fd51c6c7c10",
+      "patch": "patches/openarm_can.patch"
+    },
+    {
+      "path": "upstream/dora-openarm-evaluation/nodes/dora-openarm",
+      "url": "https://github.com/enactic/dora-openarm.git",
+      "commit": "1663ee50509142c8cabdc3019d797874a2907e97",
+      "patch": "patches/dora-openarm.patch"
+    },
+    {
+      "path": "upstream/dora-openarm-evaluation/nodes/dora-openarm-actions-executor",
+      "url": "https://github.com/enactic/dora-openarm-actions-executor.git",
+      "commit": "5306d47e84e91ebb4c7d059eb1be0f34129362ee",
+      "patch": "patches/dora-openarm-actions-executor.patch"
+    },
+    {
+      "path": "upstream/dora-openarm-evaluation/nodes/dora-openarm-observer",
+      "url": "https://github.com/enactic/dora-openarm-observer.git",
+      "commit": "ea29a662111370d471154331cf2352e35db04f60",
+      "patch": "patches/dora-openarm-observer.patch"
+    },
+    {
+      "path": "upstream/dora-openarm-evaluation/nodes/dora-openarm-local-policy-server",
+      "url": "https://github.com/enactic/dora-openarm-local-policy-server.git",
+      "commit": "de9b58cfda38e841e4bd9156965325ad06ef857e",
+      "patch": "patches/dora-openarm-local-policy-server.patch"
+    }
+  ],
+  "packages": {
+    "dora-rs": "0.5.0",
+    "dora-rs-cli": "0.5.0",
+    "openarm-can": "1.4.0+refresh1",
+    "openarm-driver": "0.5.1",
+    "lerobot": "0.6.1",
+    "torch": "2.11.0",
+    "numpy": "2.2.6",
+    "pyarrow": "26.0.0",
+    "pyrealsense2": "2.59.1.11053",
+    "draccus": "0.11.6",
+    "pyyaml": "6.0.3",
+    "mujoco": "3.8.1",
+    "opencv-python-headless": "4.13.0.92",
+    "torchvision": "0.26.0"
+  },
+  "python": "3.12",
+  "algorithm_files": {
+    "lerobot/policies/act/modeling_act.py": "a6c1a49c5daafa513b9abee9b986205d327e25c70ed13623ab2e6c0ab6b1f577"
+  },
+  "note": "Portable source/package pins. Compiled artifacts are built locally and sealed in ignored runtime.local.json; CPU/CUDA Torch build suffix is recorded there."
+}

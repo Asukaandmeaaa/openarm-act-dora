@@ -1,0 +1,164 @@
+diff --git a/src/openarm_driver/driver.py b/src/openarm_driver/driver.py
+index a59e715..deb06c8 100644
+--- a/src/openarm_driver/driver.py
++++ b/src/openarm_driver/driver.py
+@@ -142,6 +142,12 @@ class SingleArmDriver:
+         """
+         self.config = config if config is not None else get_default_config()
+         self.arm_side = arm_side
++        # Optional, explicitly configured collection feedforward. Initialize
++        # pure math before constructing any CAN device; native mode is unchanged.
++        self.feedforward = None
++        if self.config._config.get("collection_feedforward", {}).get("enabled", False):
++            from deployment.feedforward import CollectionFeedforward
++            self.feedforward = CollectionFeedforward(arm_side, self.config)
+         self.can_interface = (
+             self.config.get_can_interface(self.arm_side)
+             if can_interface is None
+@@ -150,6 +156,7 @@ class SingleArmDriver:
+         self.openarm = oa.OpenArm(self.can_interface, True)
+         self.latest_state = None
+         self.started = False
++        self._command_enabled = False
+         self._safety_stop_reason: str | None = None
+         self._last_safety_warning_time_s: float | None = None
+ 
+@@ -231,10 +238,18 @@ class SingleArmDriver:
+     def start(self) -> bool:
+         """Start the arm and report whether its startup trajectory completed."""
+         self.started = False
++        self._command_enabled = False
++        feedforward = getattr(self, "feedforward", None)
++        # Operator STOP may have arrived while the start event/constructor was
++        # queued. Do not enable first and discover it inside the home trajectory.
++        if feedforward is not None and (feedforward.held or feedforward.stopping()):
++            feedforward.hold()
++            return False
+         self._safety_stop_reason = None
+         self._last_safety_warning_time_s = None
+         self.openarm.set_callback_mode_all(oa.CallbackMode.STATE)
+         self.openarm.enable_all()
++        self._command_enabled = True
+         self.set_latest_state(timeout_us=500)
+         self.openarm.refresh_all()
+         self.set_latest_state(timeout_us=500)
+@@ -244,6 +259,10 @@ class SingleArmDriver:
+         self.last_command_dispatch_timestamp_ns = None
+         # Accept legacy None-returning hooks while retaining any latched failure.
+         if self._on_start() is False or self._safety_stop_reason is not None:
++            if feedforward is not None and feedforward.held:
++                # Startup did not complete, but motors remain enabled until
++                # operator disable. Keep zero-velocity gravity hold ticks alive.
++                return False
+             if self._safety_stop_reason is None:
+                 self._safety_stop_reason = "Start trajectory was interrupted"
+             logger.warning(
+@@ -257,22 +276,26 @@ class SingleArmDriver:
+ 
+     def stop(self):
+         """Stop the arm."""
+-        if self._safety_stop_reason is None:
+-            if self._on_stop() is False or self._safety_stop_reason is not None:
++        self._command_enabled = False
++        self.started = False
++        try:
++            if self._safety_stop_reason is None:
++                if self._on_stop() is False or self._safety_stop_reason is not None:
++                    logger.warning(
++                        "%s: stop trajectory interrupted; disabling motors",
++                        self.arm_side,
++                    )
++            else:
+                 logger.warning(
+-                    "%s: stop trajectory interrupted; disabling motors",
++                    "%s: skipping stop trajectory after safety stop: %s; disabling motors",
+                     self.arm_side,
++                    self._safety_stop_reason,
+                 )
+-        else:
+-            logger.warning(
+-                "%s: skipping stop trajectory after safety stop: %s; disabling motors",
+-                self.arm_side,
+-                self._safety_stop_reason,
+-            )
+-        self.openarm.disable_all()
+-        self.set_latest_state(timeout_us=1000)
+-        time.sleep(1)
+-        self.started = False
++        finally:
++            self.openarm.disable_all()
++            self.set_latest_state(timeout_us=1000)
++            time.sleep(1)
++            self.started = False
+ 
+     def get_health(self) -> tuple[list[str], dict]:
+         """Return the current per-axis status and bus state.
+@@ -481,7 +504,7 @@ class SingleArmDriver:
+         """Fetch the rotor temperature for each motor."""
+         return self.fetch_state(refresh=refresh)["trotor"]
+ 
+-    def send_position(self, position: ArrayLike) -> bool:
++    def send_position(self, position: ArrayLike, *, velocity=None) -> bool:
+         """Dispatch a checked position target and report whether it was sent."""
+         command_time_s = time.monotonic()
+         if self._safety_stop_reason is not None:
+@@ -490,18 +513,24 @@ class SingleArmDriver:
+ 
+         elapsed_s = max(command_time_s - self.last_command_time_s, 0.0)
+         dt_s = min(elapsed_s, MAX_COMMAND_DT_S)
+-        checked_result = self.safety_checker.check(
+-            position,
+-            driver=self,
+-            dt_s=dt_s,
+-        )
+-        if not checked_result.is_safe:
+-            if checked_result.force_stop:
+-                self._safety_stop_reason = checked_result.message
+-                self._warn_safety_stop(command_time_s)
+-                return False
+-            if checked_result.fixed_joint_positions is not None:
+-                position = checked_result.fixed_joint_positions
++        feedforward = getattr(self, "feedforward", None)
++        if feedforward is not None:
++            position, target_velocity, target_torque = feedforward.parameters(self, position, velocity)
++        else:
++            target_velocity = np.zeros(8)
++            target_torque = np.zeros(8)
++            checked_result = self.safety_checker.check(
++                position,
++                driver=self,
++                dt_s=dt_s,
++            )
++            if not checked_result.is_safe:
++                if checked_result.force_stop:
++                    self._safety_stop_reason = checked_result.message
++                    self._warn_safety_stop(command_time_s)
++                    return False
++                if checked_result.fixed_joint_positions is not None:
++                    position = checked_result.fixed_joint_positions
+ 
+         target_pos = np.array(position, dtype=float)
+         mit_params = [
+@@ -509,8 +538,8 @@ class SingleArmDriver:
+                 self.kps[i],
+                 self.kds[i],
+                 target_pos[i] + self.joint_offsets[i],
+-                0,
+-                0,
++                target_velocity[i],
++                target_torque[i],
+             )
+             for i in range(self.num_mit_motors)
+         ]
+@@ -527,7 +556,11 @@ class SingleArmDriver:
+         self.last_command = target_pos
+         self.last_command_time_s = command_time_s
+         self.last_command_dispatch_timestamp_ns = dispatch_timestamp_ns
++        if feedforward is not None:
++            feedforward.dispatched(self, target_pos, target_velocity, target_torque)
+         self.set_latest_state(timeout_us=300)
++        if feedforward is not None and (feedforward.held or feedforward.reason):
++            return False
+         return True
+ 
+     def _warn_safety_stop(self, command_time_s: float):

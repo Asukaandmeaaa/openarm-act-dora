@@ -1,0 +1,25 @@
+diff --git a/python/pyproject.toml b/python/pyproject.toml
+index 50108be..9e440f6 100644
+--- a/python/pyproject.toml
++++ b/python/pyproject.toml
+@@ -26,7 +26,7 @@ maintainers = [{name = "Enactic, Inc."}]
+ name = "openarm_can"
+ readme = "README.md"
+ requires-python = ">= 3.10"
+-version = "1.4.0"
++version = "1.4.0+refresh1"
+ 
+ [project.urls]
+ changelog = "https://github.com/enactic/openarm_can/releases"
+diff --git a/python/src/openarm_can.cpp b/python/src/openarm_can.cpp
+index 61c859b..08d7d92 100644
+--- a/python/src/openarm_can.cpp
++++ b/python/src/openarm_can.cpp
+@@ -501,6 +501,7 @@ NB_MODULE(openarm_can, m) {
+         .def("disable_all", &DMDeviceCollection::disable_all)
+         .def("set_zero_all", &DMDeviceCollection::set_zero_all)
+         .def("refresh_all", &DMDeviceCollection::refresh_all)
++        .def("refresh_one", &DMDeviceCollection::refresh_one, nb::arg("index"))
+         .def("set_callback_mode_all", &DMDeviceCollection::set_callback_mode_all,
+              nb::arg("callback_mode"))
+         .def("query_param_all", &DMDeviceCollection::query_param_all, nb::arg("rid"))

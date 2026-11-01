@@ -1,0 +1,130 @@
+# Native official robot nodes/drivers and executor; operator-only start.
+nodes:
+- id: robot-right
+  path: scripts/node
+  args: robot right
+  inputs:
+    command: control/arm_command
+    control_tick:
+      source: dora/timer/millis/4
+      queue_size: 1
+    request_position:
+      source: dora/timer/millis/10
+      queue_size: 1
+    request_state:
+      source: dora/timer/millis/100
+      queue_size: 1
+    move_position:
+      source: control/move_position_right
+      queue_size: 1
+  outputs:
+  - position
+  - state
+  - commanded_position
+  - status
+- id: robot-left
+  path: scripts/node
+  args: robot left
+  inputs:
+    command: control/arm_command
+    control_tick:
+      source: dora/timer/millis/4
+      queue_size: 1
+    request_position:
+      source: dora/timer/millis/10
+      queue_size: 1
+    request_state:
+      source: dora/timer/millis/100
+      queue_size: 1
+  outputs:
+  - position
+  - state
+  - commanded_position
+  - status
+- id: camera-ceiling
+  path: scripts/node
+  args: camera ceiling
+  inputs:
+    tick: dora/timer/millis/33
+  outputs:
+  - image
+- id: camera-wrist
+  path: scripts/node
+  args: camera wrist_right
+  inputs:
+    tick: dora/timer/millis/33
+  outputs:
+  - image
+- id: control
+  path: scripts/node
+  args: control hardware
+  inputs:
+    tick: dora/timer/millis/10
+    move_position:
+      source: executor/move_position_right
+      queue_size: 1
+  outputs:
+  - command
+  - task_prompt
+  - arm_command
+  - move_position_right
+- id: observer
+  path: scripts/node
+  args: observer
+  inputs:
+    tick: dora/timer/millis/33
+    arm_right: robot-right/position
+    arm_left: robot-left/position
+    arm_right_status: robot-right/status
+    arm_left_status: robot-left/status
+    camera_ceiling: camera-ceiling/image
+    camera_wrist_right: camera-wrist/image
+    command: control/command
+    task_prompt: control/task_prompt
+  outputs:
+  - observation
+- id: policy-client
+  path: scripts/node
+  args: client
+  inputs:
+    observation:
+      source: observer/observation
+      queue_size: 1
+    chunk_done: executor/chunk_done
+    chunk_prefetch: executor/chunk_prefetch
+  outputs:
+  - actions
+- id: executor
+  path: scripts/node
+  args: executor
+  inputs:
+    actions:
+      source: policy-client/actions
+      queue_size: 1
+  outputs:
+  - move_position_right
+  - move_position_left
+  - chunk_done
+  - chunk_prefetch
+- id: record
+  path: scripts/node
+  args: record
+  inputs:
+    right_state:
+      source: robot-right/state
+      queue_size: 20
+    right_commanded_position:
+      source: robot-right/commanded_position
+      queue_size: 20
+    right_status:
+      source: robot-right/status
+      queue_size: 20
+    left_state:
+      source: robot-left/state
+      queue_size: 20
+    left_commanded_position:
+      source: robot-left/commanded_position
+      queue_size: 20
+    left_status:
+      source: robot-left/status
+      queue_size: 20

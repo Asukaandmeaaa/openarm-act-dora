@@ -1,0 +1,23 @@
+OpenArm ACT + Dora
+Copyright (c) 2026 Asukaandmeaaa
+
+Original integration code is available under the repository MIT LICENSE.
+Third-party code and assets retain their own licenses; MIT does not replace them.
+
+This project uses and modifies code from Enactic's Dora OpenArm evaluation,
+Dora OpenArm nodes, openarm_driver, openarm_can, openarm_hardware, and
+OpenArm MuJoCo assets. These components are licensed under Apache-2.0.
+Copyright notices in original sources are retained. A copy of Apache-2.0
+is included at third_party/Apache-2.0.txt and with the MuJoCo assets.
+Exact deployment-source revisions and changes are in sources.lock.json,
+patches/, and PORTING_NOTES.txt. Vendored collection gravity sources are
+from the local openarm_hardware recovery snapshot (hashes in
+assets/gravity/provenance.json); they retain that package's Apache-2.0 terms.
+
+LeRobot ACT is an external dependency licensed under Apache-2.0. We call its
+ACTTemporalEnsembler without changing its weighting formula. Executor and
+ACT algorithms are credited to their upstream authors, not claimed as novel
+algorithms by this project. Other installed dependencies retain their own
+licenses as distributed in their packages.
+
+No endorsement by Enactic, Hugging Face, or the upstream authors is implied.

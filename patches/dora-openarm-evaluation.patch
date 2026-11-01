@@ -1,0 +1,45 @@
+diff --git a/src/local_policy_server.py b/src/local_policy_server.py
+index 1d682d9..fd17616 100644
+--- a/src/local_policy_server.py
++++ b/src/local_policy_server.py
+@@ -34,14 +34,11 @@ from PIL import Image
+ from lerobot.configs import PreTrainedConfig
+ from lerobot.policies.factory import get_policy_class, make_pre_post_processors
+ 
+-PRETRAINED_PATH = "enactic/act-openarm-2-cell-pick_up_cube_mujoco"
++PRETRAINED_PATH = os.environ["OPENARM_PRETRAINED_PATH"]
+ DEFAULT_SOCKET = "/dev/shm/policy-server.socket"
+ 
+ CAMERA_KEY_MAP = {
+     "camera_ceiling": "observation.images.ceiling",
+-    "camera_head_left": "observation.images.head_left",
+-    "camera_head_right": "observation.images.head_right",
+-    "camera_wrist_left": "observation.images.wrist_left",
+     "camera_wrist_right": "observation.images.wrist_right",
+ }
+ 
+@@ -125,6 +122,8 @@ def main():
+     policy_config = PreTrainedConfig.from_pretrained(PRETRAINED_PATH)
+     policy_config.pretrained_path = PRETRAINED_PATH
+     policy_config.device = device
++    # The full local checkpoint includes ResNet weights; avoid an unrelated download.
++    policy_config.pretrained_backbone_weights = None
+     policy = get_policy_class(policy_config.type).from_pretrained(
+         config=policy_config,
+         pretrained_name_or_path=policy_config.pretrained_path,
+@@ -145,6 +144,15 @@ def main():
+         IMAGE_SIZES[model_key] = (h, w)
+     print(f"Policy loaded. Expected image sizes: {IMAGE_SIZES}")
+ 
++    # Local deployment: warm CUDA before motors/episode startup, not during
++    # the first physical inference deadline. No hardware is accessed here.
++    warm = {"observation.state": torch.zeros(16)}
++    warm.update({key: torch.zeros(3, *size) for key,size in IMAGE_SIZES.items()})
++    with torch.inference_mode():
++        predicted = policy.predict_action_chunk(preprocessor(warm))
++        postprocessor(predicted.reshape(-1, predicted.shape[-1]))
++    policy.reset(); preprocessor.reset(); postprocessor.reset()
++
+     if os.path.exists(socket_path):
+         os.remove(socket_path)
+ 

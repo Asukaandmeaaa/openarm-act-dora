@@ -1,0 +1,26 @@
+diff --git a/src/dora_openarm_actions_executor/main.py b/src/dora_openarm_actions_executor/main.py
+index c7e874a..40ae1a5 100644
+--- a/src/dora_openarm_actions_executor/main.py
++++ b/src/dora_openarm_actions_executor/main.py
+@@ -255,13 +255,19 @@ async def _main_executor(node, events, arms, use_upsample, use_filter, control_h
+                 node.send_output(
+                     "move_position_right",
+                     pa.array([{"qpos": right_position}], type=QPOS_TYPE),
+-                    {"timestamp": timestamp},
++                    {**event['metadata'], "timestamp": timestamp,
++                     "reference_dt_ns": step_interval_ns,
++                     "reference_reset": reset and i_step == 0,
++                     "reference_end": i_step == len(loop_positions) - 1},
+                 )
+             if left_position is not None:
+                 node.send_output(
+                     "move_position_left",
+                     pa.array([{"qpos": left_position}], type=QPOS_TYPE),
+-                    {"timestamp": timestamp},
++                    {**event['metadata'], "timestamp": timestamp,
++                     "reference_dt_ns": step_interval_ns,
++                     "reference_reset": reset and i_step == 0,
++                     "reference_end": i_step == len(loop_positions) - 1},
+                 )
+ 
+ 

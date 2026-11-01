@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+workspace_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$workspace_dir"
+unset ROS_DOMAIN_ID ROS_SECURITY_ENABLE ROS_SECURITY_STRATEGY ROS_SECURITY_KEYSTORE
+export PYTHONPATH="$workspace_dir"
+export PYTHONUNBUFFERED=1
+exec "$workspace_dir/.venv/bin/python" -m deployment.node "$@"

@@ -1,0 +1,49 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index c8f6f0c..d0b6981 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -21,7 +21,7 @@ license = { text = "Apache-2.0" }
+ readme = "README.md"
+ requires-python = ">=3.10"
+ 
+-dependencies = ["dora-rs >= 0.3.9", "opencv-python"]
++dependencies = ["dora-rs >= 0.3.9", "opencv-python-headless"]
+ 
+ [dependency-groups]
+ dev = [
+diff --git a/src/dora_openarm_observer/main.py b/src/dora_openarm_observer/main.py
+index bd10a2b..6a55c78 100644
+--- a/src/dora_openarm_observer/main.py
++++ b/src/dora_openarm_observer/main.py
+@@ -43,6 +43,10 @@ def _reset_observation(observation, arms):
+     observation["camera_head_right"] = None
+     observation["camera_head_left"] = None
+     observation["camera_ceiling"] = None
++    # Local hardware has exactly the two cameras used in the saved checkpoint.
++    for name in _CAMERA_NAMES:
++        if name not in ("camera_ceiling", "camera_wrist_right"):
++            observation.pop(name, None)
+     observation["id"] = 0
+ 
+ 
+@@ -194,6 +198,20 @@ def main():
+                     "episode_number": episode_number,
+                     "timestamp": time.time_ns(),
+                 }
++                # Retain sampling times for diagnostics without an age/skew gate.
++                # Do not stamp cached
++                # images/state as fresh merely because an observer tick ran.
++                now_ns = time.monotonic_ns()
++                wall_ns = time.time_ns()
++                # Official robot nodes report snapshot wall time; this is not
++                # an individual motor's last CAN response timestamp.
++                sources = [int(v['metadata']['source_monotonic_ns'])
++                           if 'source_monotonic_ns' in v['metadata'] else
++                           now_ns - (wall_ns-int(v['metadata']['observation_timestamp']))
++                           for k, v in observation.items() if k != 'id']
++                metadata.update(observation_monotonic_ns=now_ns,
++                                source_age_ns=now_ns-min(sources),
++                                source_skew_ns=max(sources)-min(sources))
+                 arrow_observation = _build_output(
+                     observation,
+                     last_phase_classifier_result,

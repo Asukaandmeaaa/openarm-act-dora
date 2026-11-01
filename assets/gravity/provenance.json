@@ -1,0 +1,10 @@
+{
+  "assets/gravity/dynamics.cpp": {
+    "source": "openarm_hardware/src/dynamics.cpp",
+    "sha256": "eb1e090da2972ac36ecea494ab527868993a1cbca2ea905325c5cddcb6e99028"
+  },
+  "assets/gravity/include/openarm_hardware/dynamics.hpp": {
+    "source": "openarm_hardware/include/openarm_hardware/dynamics.hpp",
+    "sha256": "93e1d0c231b482c76f1e4e87a6877b1e031fb41e612e7e897a83b09d711406cb"
+  }
+}

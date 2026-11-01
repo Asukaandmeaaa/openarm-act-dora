@@ -1,0 +1,14 @@
+{
+  "destination": "models/act_sim_mix_100_30k_01/pretrained_model",
+  "url": "https://github.com/Asukaandmeaaa/openarm-act-dora/releases/download/model-v1/act-sim-mix-30k.tar.gz",
+  "archive_sha256": "54fd4e6e55660196e24316d24ef51361a8417bbfb3aa3c136b614fb5466a34b6",
+  "archive_bytes": 191864748,
+  "files": {
+    "config.json": "3d5102f7b0f8fece7895c67654056162f15292375f993c433b71155a519489d9",
+    "model.safetensors": "2c64de81ba1646175f30c827be1ab6d6166cd0b4652cc8bd1a53408d9f9f85aa",
+    "policy_postprocessor.json": "c9622fba743c34a8bbdcecb80e844b55208fea26986b102852f9d746c7861763",
+    "policy_postprocessor_step_0_unnormalizer_processor.safetensors": "23beee4e2d90a1794d11f8c16a3d35150a99081d4c8f1a934a1ffc11f5fd55b0",
+    "policy_preprocessor.json": "a03a75d7ef6609edd1771d30fcb2f4501c72ed73f59522cf0a78c1a0f6ae3619",
+    "policy_preprocessor_step_3_normalizer_processor.safetensors": "3014cc88cbb2c1d04dcf2d9ea0795dab86ab9fcc343c186213b7d124a0e91920"
+  }
+}

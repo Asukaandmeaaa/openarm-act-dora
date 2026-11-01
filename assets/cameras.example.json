@@ -1,0 +1,4 @@
+{
+  "ceiling_serial": "YOUR_REALSENSE_SERIAL",
+  "wrist_right_path": "/dev/v4l/by-id/YOUR_WRIST_CAMERA"
+}

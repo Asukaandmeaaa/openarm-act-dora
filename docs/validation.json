@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-01",
+  "platform": "Linux x86_64 / Ubuntu 24.04 container",
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "torch": "2.11.0+cpu",
+  "torchvision": "0.26.0+cpu",
+  "lerobot": "0.6.1",
+  "tests_passed": 197,
+  "test_seconds": 4.66,
+  "network": "none",
+  "hardware_accessed": false,
+  "physical_validation_passed": false,
+  "model_output_shape": [
+    100,
+    16
+  ],
+  "model_inference_seconds": 0.5939141489998292,
+  "model_sha256": "2c64de81ba1646175f30c827be1ab6d6166cd0b4652cc8bd1a53408d9f9f85aa",
+  "source_lock_sha256": "8c2beec58779d9a47ab6cc7deb759ae681ea6396a5fef11d5799f9a09fb2bf82",
+  "requirements_sha256": "e390c2e3a5e8f4a07f7784e012d7019507b428be6499b4571fb390308e1661a6",
+  "cuda_constraints_sha256": "edfd561444846f9655b8202c04d76a955f182d1b582d5cfabe3d5264c246e4a6",
+  "local_binary_hashes_checked": 16,
+  "cuda_constraints_resolved": 19,
+  "fresh_cuda_install_tested": false,
+  "scope": "Fresh CPU dependency/source/native installation; software checks only. Model mounted read-only, no device mounts."
+}

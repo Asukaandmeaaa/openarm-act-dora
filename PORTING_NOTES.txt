@@ -1,0 +1,76 @@
+OpenArm ACT + Dora portable deployment release — 2026-11-01
+
+Baseline
+  Exported from the independent Dora workspace associated with trial_gjn07tjf.
+  Original operation workspace, logs and success backups were not changed.
+  Runtime does not import another training workspace.
+  Source-baseline hashes are in docs/source_manifest.json. Physical evidence and
+  release software verification are separate: see docs/EXPERIMENTS.md.
+
+Preserved control and algorithm
+  ACT predicts 100 steps, same-target-time ensemble, immutable 50-step blocks.
+  LeRobot ACTTemporalEnsembler formula is unchanged; coefficient 0.
+  Background 30 Hz predictions, one-slot latency, explicit gap/reset handling.
+  30 Hz target hold and official 250 Hz / 15 Hz low-pass remain unchanged.
+  Collection Kp/Kd, right reference velocity and G(q_feedback) scale 1.0,
+  left position hold with gravity, and gripper position control are preserved.
+  No new gains, compensation, Ruckig, action queues or blending algorithm.
+
+ALL upstream modifications (captured by scripts/freeze_sources.py)
+  patches/dora-openarm-evaluation.patch:
+    Local checkpoint via OPENARM_PRETRAINED_PATH; two trained camera roles.
+    Device processor override and synthetic warmup/reset before policy service.
+    RELEASE: pretrained_backbone_weights=None because the full checkpoint already
+    contains the backbone. Prevents a hidden download; model weights are unchanged.
+  patches/dora-openarm-observer.patch:
+    Two camera roles; capture timestamp/age metadata. No age-based sample removal.
+    RELEASE: opencv-python dependency changed to opencv-python-headless to use
+    one cv2 implementation, matching the locked LeRobot dependency. No GUI use in
+    this observer; RGB decode and observation assembly are unchanged.
+  patches/dora-openarm-local-policy-server.patch:
+    Original socket protocol/reset plus local chunk/temporal dispatch and logging;
+    timestamps and original prediction chunks retained, input queue size 1.
+  patches/dora-openarm-actions-executor.patch:
+    Propagate input metadata to output. Hermite, filtering and scheduling math
+    unchanged; AST parity is checked against the pinned upstream commit.
+  patches/openarm_can.patch:
+    Expose existing C++ refresh_one(index) in nanobind; package 1.4.0+refresh1.
+    No CAN codec, motor-control or C++ transport change.
+  patches/dora-openarm.patch:
+    Existing collection-mode hold/control_tick hooks and feedforward target handoff.
+    Exception path publishes peer-arm fault/stop; finally runs driver cleanup.
+    STOP drops the driver reference before cleanup to avoid an implicit retry.
+  patches/openarm_driver.patch:
+    Existing collection feedforward constructor, checked MIT velocity/torque
+    parameters and dispatched-command logging. Track command enable state;
+    reject pre-start STOP, continue gravity hold after interrupted startup;
+    disable in finally on stop. Native position-mode branch remains available.
+    These node/driver patches were already present in the tested workspace;
+    they are preserved here, not introduced as new release control behavior.
+
+Release-only local integration changes
+  Separate Python 3.12 venv, common/CUDA dependency locks, exact-source bootstrap and
+  native build scripts, including explicit CLI11 development dependency.
+  Python dependency installation is a separate Docker cache layer.
+  No inherited Conda/system Python packages.
+  freeze_sources now preserves raw diff trailing context, which is required to
+  apply exported patches on a clean checkout. It does not rewrite package pins.
+  Portable source checks plus a per-machine runtime seal replace original
+  machine-specific absolute library paths/hashes. Torch CPU/CUDA variants are
+  recorded locally; full Python lock checked before runtime.
+  Camera IDs move into ignored cameras.local.json; hardware override is optional.
+  Unix socket path uses tempfile directory plus uid/session ID for headless hosts.
+  Model downloaded separately with archive/file SHA256 checks, atomic install.
+  Synthetic model test reads configured chunk size and disables unused backbone
+  initialization download; the published six checkpoint files are byte-identical.
+  Tests use checked-in small reference fixtures instead of historical archive
+  paths. Official executor replay reference is retrieved via pinned git show.
+  Optional saved-image fake test input is user-supplied; no camera records shipped.
+  Runtime manifest includes local seal, requirements lock and model manifest.
+
+Licenses and boundaries
+  Root MIT for original integration; upstream notices/Apache-2.0 retained.
+  No physical graph, CAN sockets, cameras or motors may be used by offline tests.
+  Only operator commands prepare-host/dora/enable/home/start touch physical setup.
+  Preserve every session, including failure evidence and one-shot requests.
+  Do not run ROS and Dora on the same CAN interface simultaneously.

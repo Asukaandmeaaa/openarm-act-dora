@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Alias using the same mixed ACT 100/50 configuration as actctl.
+# ENABLE/START remain explicit operator actions.
+set -euo pipefail
+workspace_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$workspace_dir"
+export OPENARM_DEPLOYMENT_CONFIG="$workspace_dir/assets/deployment_sim_mix_100_50.json"
+export PYTHONPATH="$workspace_dir"
+export PYTHONUNBUFFERED=1
+exec "$workspace_dir/.venv/bin/python" -m deployment.cli "$@"
